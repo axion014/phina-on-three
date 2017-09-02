@@ -17,7 +17,9 @@ phina.define('phina.display.ThreeApp', {
 
 		this.scene = new THREE.Scene();
 		if (!this.renderer) this.renderer = new THREE.WebGLRenderer({canvas: this.domElement});
-		this.renderer.setSize(options.width, options.height );
+		this.renderer.setSize(options.width, options.height);
+
+		this.camera = new THREE.OrthographicCamera(0, options.width, options.height, 0, 0, Infinity);
 
 		this.gridX = phina.util.Grid({
       width: options.width,
@@ -40,7 +42,7 @@ phina.define('phina.display.ThreeApp', {
     }
 		this.renderer.clear();
 
-    this.renderer.render(this.scene, camera);
+    this.renderer.render(this.scene, this.camera);
   },
 
   fitScreen: function() {
