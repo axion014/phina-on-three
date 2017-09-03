@@ -10,4 +10,5 @@ phina.define('MainScene', {
 phina.main(function() {
 	var app = ThreeApp({});
 	app.replaceScene(MainScene());
+	app.run();
 });
