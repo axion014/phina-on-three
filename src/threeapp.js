@@ -46,5 +46,35 @@ phina.define('phina.display.ThreeApp', {
   },
 
   fitScreen: function() {
+      var _fitFunc = function() {
+        var e = this.domElement;
+        var s = e.style;
+
+        s.position = "absolute";
+        s.margin = "auto";
+        s.left = "0";
+        s.top  = "0";
+        s.bottom = "0";
+        s.right = "0";
+
+        var rateWidth = e.width/window.innerWidth;
+        var rateHeight= e.height/window.innerHeight;
+        var rate = e.height/e.width;
+
+        if (rateWidth > rateHeight) {
+          var width  = Math.floor(window.innerWidth);
+          var height = Math.floor(window.innerWidth*rate);
+        } else {
+          var width  = Math.floor(window.innerHeight/rate);
+          var height = Math.floor(window.innerHeight);
+        }
+				this.renderer.setSize(width, height);
+      }.bind(this);
+
+      // 一度実行しておく
+      _fitFunc();
+
+      // リサイズ時のリスナとして登録しておく
+      phina.global.addEventListener("resize", _fitFunc, false);
   },
 });
