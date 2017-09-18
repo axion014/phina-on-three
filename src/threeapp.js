@@ -42,6 +42,52 @@ phina.define('phina.display.ThreeApp', {
     }
 		this.renderer.clear();
 
+		var updateObject = function(obj) {
+
+	    obj._calcWorldMatrix && obj._calcWorldMatrix();
+
+	    if (obj.visible === false) {
+				if(obj.mesh && obj.parent !== this.currentScene) obj.parent.mesh.remove(obj.mesh);
+				return;
+			}
+
+			if (!obj.mesh) (function recurse(o) {
+				if (o.initThreeMesh) o.mesh = o.initThreeMesh();
+				else o.mesh = new THREE.Group();
+				
+				if (o.parent === this.currentScene) {
+					this.scene.add(o.mesh);
+				} else {
+					if (!o.parent.mesh) recurse(o.parent);
+					o.parent.mesh.add(o.mesh);
+				}
+			}.bind(this))(obj);
+
+			obj.updateThreeMesh && obj.updateThreeMesh(obj.mesh);
+
+      obj._calcWorldAlpha && obj._calcWorldAlpha();
+			obj.mesh.material.transparent = obj._worldAlpha !== 1;
+			obj.mesh.material.opacity = obj._worldAlpha;
+
+	    obj.mesh.position.set(obj.x, obj.y, 0);
+			obj.mesh.rotateZ(Math.degToRad(obj.rotation));
+			obj.mesh.scale.set(obj.scaleX, obj.scaleY, 1);
+
+	    if (obj.renderChildBySelf === false && obj.children.length > 0) {
+	      var tempChildren = obj.children.slice();
+	      for (var i=0,len=tempChildren.length; i<len; ++i) {
+	        updateObject(tempChildren[i]);
+	      }
+	    }
+	  }.bind(this);
+
+		if (this.currentScene.children.length > 0) {
+      var tempChildren = this.currentScene.children.slice();
+      for (var i=0,len=tempChildren.length; i<len; ++i) {
+        updateObject(tempChildren[i]);
+      }
+    }
+
     this.renderer.render(this.scene, this.camera);
   },
 
