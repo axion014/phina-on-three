@@ -1,5 +1,5 @@
 /* 
- * phina.js 0.2.0
+ * phina.js 0.2.1
  * phina.js is a game library in javascript
  * MIT Licensed
  * 
@@ -2322,7 +2322,7 @@ var phina = phina || {};
   /**
    * バージョン
    */
-  phina.VERSION = '0.2.0';
+  phina.VERSION = '0.2.1';
 
   /**
    * @method isNode
@@ -10939,7 +10939,14 @@ phina.namespace(function() {
       }
     },
 
-    gotoAndPlay: function(name) {
+    gotoAndPlay: function(name, keep) {
+      keep = (keep !== undefined) ? keep : true;
+      if (keep && name === this.currentAnimationName
+               && this.currentFrameIndex < this.currentAnimation.frames.length
+               && !this.paused) {
+        return this;
+      }
+      this.currentAnimationName = name;
       this.frame = 0;
       this.currentFrameIndex = 0;
       this.currentAnimation = this.ss.getAnimation(name);
@@ -10951,6 +10958,7 @@ phina.namespace(function() {
     },
 
     gotoAndStop: function(name) {
+      this.currentAnimationName = name;
       this.frame = 0;
       this.currentFrameIndex = 0;
       this.currentAnimation = this.ss.getAnimation(name);
@@ -12249,6 +12257,10 @@ phina.namespace(function() {
     },
 
     draw: function(canvas) {
+      this._draw();
+    },
+
+    _draw: function(canvas) {
       var image = this.canvas.domElement;
       var w = image.width;
       var h = image.height;
@@ -12303,14 +12315,6 @@ phina.namespace(function() {
 
       this.watchDraw = true;
       this._dirtyDraw = true;
-
-      this.on('enterframe', function() {
-        // render
-        if (this.watchDraw && this._dirtyDraw === true) {
-          this.render(this.canvas);
-          this._dirtyDraw = false;
-        }
-      });
     },
 
     calcCanvasWidth: function() {
@@ -12387,6 +12391,15 @@ phina.namespace(function() {
       this.postrender(this.canvas);
 
       return this;
+    },
+
+    draw: function(canvas) {
+      if (this.watchDraw && this._dirtyDraw === true) {
+        // render
+        this.render(this.canvas);
+        this._dirtyDraw = false;
+      }
+      this._draw();
     },
 
     _static: {
@@ -13371,7 +13384,7 @@ phina.namespace(function() {
      */
     init: function(options) {
       options = (options || {}).$safe(phina.display.CanvasApp.defaults);
-
+      
       if (!options.query && !options.domElement) {
         options.domElement = document.createElement('canvas');
         if (options.append) {
@@ -13405,7 +13418,6 @@ phina.namespace(function() {
 
       if (options.fit) {
         this.fitScreen();
-				this.fitting = true;
       }
 
       if (options.pixelated) {
