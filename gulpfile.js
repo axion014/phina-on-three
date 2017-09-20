@@ -15,7 +15,7 @@ gulp.task('build', function() {
 	.pipe(plumber())
 	.pipe(concat('phina-on-three.js'))
 	.pipe(gulp.dest('./build/'))
-	.pipe(uglify())
+	.pipe(uglify({output:{comments: /^!/}}))
 	.pipe(rename({extname: '.min.js'}))
 	.pipe(gulp.dest('./build/'));
 })

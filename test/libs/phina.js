@@ -12257,7 +12257,7 @@ phina.namespace(function() {
     },
 
     draw: function(canvas) {
-      this._draw();
+      this._draw(canvas);
     },
 
     _draw: function(canvas) {
@@ -12399,7 +12399,7 @@ phina.namespace(function() {
         this.render(this.canvas);
         this._dirtyDraw = false;
       }
-      this._draw();
+      this._draw(canvas);
     },
 
     _static: {
