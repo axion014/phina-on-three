@@ -49,8 +49,8 @@ phina.define('phina.display.ThreeApp', {
       if (!obj.mesh) (function recurse(o) {
         if (o.initThreeMesh) {
           o.mesh = o.initThreeMesh();
-          o.mesh.initialQuaternion = o.mesh.quaternion.clone();
         } else o.mesh = new THREE.Group();
+        o.mesh.initialQuaternion = o.mesh.quaternion.clone();
 
         if (o.parent === this.currentScene) {
           this.scene.add(o.mesh);
@@ -66,8 +66,8 @@ phina.define('phina.display.ThreeApp', {
       if (obj.mesh.material) {
         obj.mesh.material.transparent = obj.className === "phina.display.Label" || obj._worldAlpha !== 1;
         obj.mesh.material.opacity = obj._worldAlpha;
-        obj.mesh.quaternion.copy(obj.mesh.initialQuaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.degToRad(-obj.rotation))));
       }
+      obj.mesh.quaternion.copy(obj.mesh.initialQuaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.degToRad(-obj.rotation))));
 
       obj.mesh.position.set(obj.x, -obj.y, 0);
 
