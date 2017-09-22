@@ -33,27 +33,27 @@ var THREE_text2d = (function(t){function e(s){if(i[s])return i[s].exports;var n=
  ******************************************************************************/
 
 phina.define('phina.display.ThreeApp', {
-	superClass: 'phina.display.DomApp',
-	init: function(options) {
-		options = (options || {}).$safe(phina.display.CanvasApp.defaults);
+  superClass: 'phina.display.DomApp',
+  init: function(options) {
+    options = (options || {}).$safe(phina.display.CanvasApp.defaults);
 
-		if (!options.query && !options.domElement) {
-			this.renderer = new THREE.WebGLRenderer({antialias: true});
+    if (!options.query && !options.domElement) {
+      this.renderer = new THREE.WebGLRenderer({antialias: true});
       options.domElement = this.renderer.domElement;
       if (options.append) document.body.appendChild(options.domElement);
     }
     if(!options.runner && phina.isAndroid()) options.runner = phina.global.requestAnimationFrame;
-		this.superInit(options);
+    this.superInit(options);
 
-		this.scene = new THREE.Scene();
-		if (!this.renderer) this.renderer = new THREE.WebGLRenderer({antialias: true, canvas: this.domElement});
-		this.renderer.setSize(options.width, options.height);
-		this.renderer.setPixelRatio(devicePixelRatio);
+    this.scene = new THREE.Scene();
+    if (!this.renderer) this.renderer = new THREE.WebGLRenderer({antialias: true, canvas: this.domElement});
+    this.renderer.setSize(options.width, options.height);
+    this.renderer.setPixelRatio(devicePixelRatio);
 
-		this.camera = new THREE.OrthographicCamera(0, options.width, 0, -options.height, 1, 10000);
-		this.camera.position.z = 5;
+    this.camera = new THREE.OrthographicCamera(0, options.width, 0, -options.height, 1, 10000);
+    this.camera.position.z = 5;
 
-		this.gridX = phina.util.Grid({
+    this.gridX = phina.util.Grid({
       width: options.width,
       columns: options.columns,
     });
@@ -62,58 +62,58 @@ phina.define('phina.display.ThreeApp', {
       columns: options.columns,
     });
 
-		this.backgroundColor = (options.backgroundColor !== undefined) ? options.backgroundColor : 'white';
+    this.backgroundColor = (options.backgroundColor !== undefined) ? options.backgroundColor : 'white';
 
-		if (options.fit) this.fitScreen();
-	},
-	_draw: function() {
+    if (options.fit) this.fitScreen();
+  },
+  _draw: function() {
     if (this.backgroundColor) {
       this.renderer.setClearColor(new THREE.Color(this.backgroundColor), 1);
     }
 
-		var updateObject = function(obj) {
+    var updateObject = function(obj) {
 
-	    obj._calcWorldMatrix && obj._calcWorldMatrix();
+      obj._calcWorldMatrix && obj._calcWorldMatrix();
 
-	    if (obj.visible === false) {
-				if(obj.mesh && obj.parent !== this.currentScene) obj.parent.mesh.remove(obj.mesh);
-				return;
-			}
+      if (obj.visible === false) {
+        if(obj.mesh && obj.parent !== this.currentScene) obj.parent.mesh.remove(obj.mesh);
+        return;
+      }
 
-			if (!obj.mesh) (function recurse(o) {
-				if (o.initThreeMesh) {
-					o.mesh = o.initThreeMesh();
-					o.mesh.initialQuaternion = o.mesh.quaternion.clone();
-				} else o.mesh = new THREE.Group();
+      if (!obj.mesh) (function recurse(o) {
+        if (o.initThreeMesh) {
+          o.mesh = o.initThreeMesh();
+          o.mesh.initialQuaternion = o.mesh.quaternion.clone();
+        } else o.mesh = new THREE.Group();
 
-				if (o.parent === this.currentScene) {
-					this.scene.add(o.mesh);
-				} else {
-					if (!o.parent.mesh) recurse(o.parent);
-					o.parent.mesh.add(o.mesh);
-				}
-			}.bind(this))(obj);
+        if (o.parent === this.currentScene) {
+          this.scene.add(o.mesh);
+        } else {
+          if (!o.parent.mesh) recurse(o.parent);
+          o.parent.mesh.add(o.mesh);
+        }
+      }.bind(this))(obj);
 
-			obj.updateThreeMesh && obj.updateThreeMesh(obj.mesh);
+      obj.updateThreeMesh && obj.updateThreeMesh(obj.mesh, this);
 
       obj._calcWorldAlpha && obj._calcWorldAlpha();
-			if (obj.mesh.material) {
-				obj.mesh.material.transparent = obj.className === "phina.display.Label" || obj._worldAlpha !== 1;
-				obj.mesh.material.opacity = obj._worldAlpha;
-				obj.mesh.quaternion.copy(obj.mesh.initialQuaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.degToRad(-obj.rotation))));
-			}
+      if (obj.mesh.material) {
+        obj.mesh.material.transparent = obj.className === "phina.display.Label" || obj._worldAlpha !== 1;
+        obj.mesh.material.opacity = obj._worldAlpha;
+        obj.mesh.quaternion.copy(obj.mesh.initialQuaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.degToRad(-obj.rotation))));
+      }
 
-			obj.mesh.position.set(obj.x, -obj.y, 0);
+      obj.mesh.position.set(obj.x, -obj.y, 0);
 
-	    if (obj.renderChildBySelf === false && obj.children.length > 0) {
-	      var tempChildren = obj.children.slice();
-	      for (var i=0,len=tempChildren.length; i<len; ++i) {
-	        updateObject(tempChildren[i]);
-	      }
-	    }
-	  }.bind(this);
+      if (obj.renderChildBySelf === false && obj.children.length > 0) {
+        var tempChildren = obj.children.slice();
+        for (var i=0,len=tempChildren.length; i<len; ++i) {
+          updateObject(tempChildren[i]);
+        }
+      }
+    }.bind(this);
 
-		if (this.currentScene.children.length > 0) {
+    if (this.currentScene.children.length > 0) {
       var tempChildren = this.currentScene.children.slice();
       for (var i=0,len=tempChildren.length; i<len; ++i) {
         updateObject(tempChildren[i]);
@@ -146,7 +146,7 @@ phina.define('phina.display.ThreeApp', {
           var width  = Math.floor(window.innerHeight/rate);
           var height = Math.floor(window.innerHeight);
         }
-				this.renderer.setSize(width, height);
+        this.renderer.setSize(width, height);
       }.bind(this);
 
       // 一度実行しておく
@@ -158,62 +158,79 @@ phina.define('phina.display.ThreeApp', {
 });
 
 phina.display.RectangleShape.prototype.$extend({
-	initThreeMesh: function() {
-		var geometry = new THREE.PlaneBufferGeometry(1, 1);
-		var mesh = new THREE.Mesh(
-			geometry,
-			new THREE.MeshBasicMaterial({side: THREE.DoubleSide})
-		);
-		mesh.edge = new THREE.LineSegments(
-			new THREE.EdgesGeometry(geometry),
-			new THREE.LineBasicMaterial()
-		);
-		mesh.add(mesh.edge);
-		return mesh;
-	},
-	updateThreeMesh: function(mesh) {
-		mesh.scale.set(this.width * this.scaleX, this.height * this.scaleY, 1);
-		mesh.material.color = new THREE.Color(this.fill);
-		mesh.edge.material.color = new THREE.Color(this.stroke);
-		mesh.edge.material.linewidth = this.strokeWidth / 2;
-	}
+  initThreeMesh: function() {
+    var geometry = new THREE.PlaneBufferGeometry(1, 1);
+    var mesh = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial({side: THREE.DoubleSide})
+    );
+    mesh.edge = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geometry),
+      new THREE.LineBasicMaterial()
+    );
+    mesh.add(mesh.edge);
+    return mesh;
+  },
+  updateThreeMesh: function(mesh) {
+    mesh.scale.set(this.width * this.scaleX, this.height * this.scaleY, 1);
+    mesh.material.color = new THREE.Color(this.fill);
+    mesh.edge.material.color = new THREE.Color(this.stroke);
+    mesh.edge.material.linewidth = this.strokeWidth / 2;
+  }
 });
 
 phina.display.CircleShape.prototype.$extend({
-	initThreeMesh: function() {
-		var geometry = new THREE.CircleGeometry(1, 128);
-		var mesh = new THREE.Mesh(
-			geometry,
-			new THREE.MeshBasicMaterial({side: THREE.DoubleSide})
-		);
-		mesh.edge = new THREE.LineSegments(
-			new THREE.EdgesGeometry(geometry),
-			new THREE.LineBasicMaterial()
-		);
-		mesh.add(mesh.edge);
-		return mesh;
-	},
-	updateThreeMesh: function(mesh) {
-		mesh.scale.set(this.radius * this.scaleX, this.radius * this.scaleY, 1);
-		mesh.material.color = new THREE.Color(this.fill);
-		mesh.edge.material.color = new THREE.Color(this.stroke);
-		mesh.edge.material.linewidth = this.strokeWidth / 2;
-	}
+  initThreeMesh: function() {
+    var geometry = new THREE.CircleGeometry(1, 128);
+    var mesh = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial({side: THREE.DoubleSide})
+    );
+    mesh.edge = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geometry),
+      new THREE.LineBasicMaterial()
+    );
+    mesh.add(mesh.edge);
+    return mesh;
+  },
+  updateThreeMesh: function(mesh) {
+    mesh.scale.set(this.radius * this.scaleX, this.radius * this.scaleY, 1);
+    mesh.material.color = new THREE.Color(this.fill);
+    mesh.edge.material.color = new THREE.Color(this.stroke);
+    mesh.edge.material.linewidth = this.strokeWidth / 2;
+  }
 });
 
 phina.display.Label.prototype.$extend({
-	initThreeMesh: function() {
-		return new THREE_text2d.MeshText2D(this.text, {
-			align: THREE_text2d.textAlign[this.align].add(new THREE.Vector2(0, 0.5)),
-			font: this.font,
-			fillStyle: this.fill
-		});
-	},
-	updateThreeMesh: function(mesh) {
-		mesh.align = THREE_text2d.textAlign[this.align].add(new THREE.Vector2(0, 0.5));
-		mesh.text = this.text;
-		mesh.font = this.font;
-		mesh.fillStyle = this.fill;
-		mesh.scale.set(this.scaleX, this.scaleY, 1);
-	}
+  initThreeMesh: function() {
+    return new THREE_text2d.MeshText2D(this.text, {
+      align: THREE_text2d.textAlign[this.align].add(new THREE.Vector2(0, 0.5)),
+      font: this.font,
+      fillStyle: this.fill
+    });
+  },
+  updateThreeMesh: function(mesh) {
+    mesh.align = THREE_text2d.textAlign[this.align].add(new THREE.Vector2(0, 0.5));
+    mesh.text = this.text;
+    mesh.font = this.font;
+    mesh.fillStyle = this.fill;
+    mesh.scale.set(this.scaleX, this.scaleY, 1);
+  }
+});
+
+phina.display.ThreeLayer.prototype.$extend({
+  initThreeMesh: function() {
+    this.renderTarget = new THREE.WebGLRenderTarget(this.width * this.scaleX, this.height * this.scaleY, {});
+    return new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(1, 1),
+      new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, map: this.renderTarget.texture})
+    );
+  },
+  updateThreeMesh: function(mesh, app) {
+    var tmpClearColor = app.renderer.getClearColor();
+    app.renderer.setClearColor(this.renderer.getClearColor());
+    app.renderer.render(this.scene, this.camera, this.renderTarget);
+    app.renderer.setClearColor(tmpClearColor);
+    mesh.scale.set(this.width * this.scaleX, this.height * this.scaleY, 1);
+  }
 });
