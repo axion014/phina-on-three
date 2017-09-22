@@ -8,6 +8,15 @@ phina.define('SceneObjects', {
 	superClass: 'DisplayElement',
 	init: function() {
 		this.superInit();
+		var threelayer = phina.display.ThreeLayer({x: 160, y: 240, width: 320, height: 480}).addChildTo(this);
+
+		threelayer.scene.add(new THREE.AmbientLight(0x888888));
+
+		threelayer.scene.add(new THREE.Mesh(
+      new THREE.IcosahedronGeometry(200),
+      new THREE.MeshLambertMaterial({color: 0x44bb44, side: THREE.DoubleSide})
+    ));
+
 		RectangleShape({
 			x: 160, y: 120
 		}).addChildTo(this).on('enterframe', function(e) {
