@@ -44,6 +44,9 @@ phina.define('MainThreeScene', {
 	init: function() {
 		this.superInit();
 		SceneObjects().addChildTo(this);
+	},
+	onenter: function(e) {
+		e.app.composer.addPass(new THREE.GlitchPass());
 	}
 });
 
@@ -56,10 +59,22 @@ phina.define('MainScene', {
 });
 
 phina.main(function() {
-	var app = ThreeApp({fit: false});
-	app.replaceScene(MainThreeScene());
-	app.run();
-	var app = CanvasApp({fit: false});
-	app.replaceScene(MainScene());
-	app.run();
+	var threeapp = ThreeApp({fit: false});
+	threeapp.setupEffect().then(function() {
+		threeapp.replaceScene(LoadingScene({
+			assets: {
+				script: {
+					gp: "https://threejs.org/examples/js/postprocessing/GlitchPass.js",
+					dg: "https://threejs.org/examples/js/shaders/DigitalGlitch.js"
+				}
+			},
+			exitType: 'manual'
+		}).on('loaded', function() {
+			threeapp.replaceScene(MainThreeScene());
+		}));
+		threeapp.run();
+	});
+	var canvasapp = CanvasApp({fit: false});
+	canvasapp.replaceScene(MainScene());
+	canvasapp.run();
 });
