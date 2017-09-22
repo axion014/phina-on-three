@@ -86,9 +86,11 @@ phina.define('phina.display.ThreeApp', {
       }
     }
 
+    this.render();
+  },
+  render: function() {
     this.renderer.render(this.scene, this.camera);
   },
-
   fitScreen: function() {
       var _fitFunc = function() {
         var e = this.domElement;

@@ -11,7 +11,7 @@ gulp.task('watch', ['build'], function() {
 });
 var name = 'phina-on-three';
 var dest = gulp.dest.bind(gulp, './build/');
-var dests = [''];
+var dests = ['', 'effect'];
 
 gulp.task('build', function() {
   dests.forEach(function(d) {
