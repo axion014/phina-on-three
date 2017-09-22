@@ -83,8 +83,8 @@ phina.define('phina.display.ThreeApp', {
       if (!obj.mesh) (function recurse(o) {
         if (o.initThreeMesh) {
           o.mesh = o.initThreeMesh();
-          o.mesh.initialQuaternion = o.mesh.quaternion.clone();
         } else o.mesh = new THREE.Group();
+        o.mesh.initialQuaternion = o.mesh.quaternion.clone();
 
         if (o.parent === this.currentScene) {
           this.scene.add(o.mesh);
@@ -100,8 +100,8 @@ phina.define('phina.display.ThreeApp', {
       if (obj.mesh.material) {
         obj.mesh.material.transparent = obj.className === "phina.display.Label" || obj._worldAlpha !== 1;
         obj.mesh.material.opacity = obj._worldAlpha;
-        obj.mesh.quaternion.copy(obj.mesh.initialQuaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.degToRad(-obj.rotation))));
       }
+      obj.mesh.quaternion.copy(obj.mesh.initialQuaternion.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.degToRad(-obj.rotation))));
 
       obj.mesh.position.set(obj.x, -obj.y, 0);
 
@@ -120,9 +120,11 @@ phina.define('phina.display.ThreeApp', {
       }
     }
 
+    this.render();
+  },
+  render: function() {
     this.renderer.render(this.scene, this.camera);
   },
-
   fitScreen: function() {
       var _fitFunc = function() {
         var e = this.domElement;
@@ -159,45 +161,52 @@ phina.define('phina.display.ThreeApp', {
 
 phina.display.RectangleShape.prototype.$extend({
   initThreeMesh: function() {
+    var group = new THREE.Group();
     var geometry = new THREE.PlaneBufferGeometry(1, 1);
-    var mesh = new THREE.Mesh(
+    group.fill = new THREE.Mesh(
       geometry,
       new THREE.MeshBasicMaterial({side: THREE.DoubleSide})
     );
-    mesh.edge = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geometry),
-      new THREE.LineBasicMaterial()
+    group.fill.position.z = 1;
+    group.stroke = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial()
     );
-    mesh.add(mesh.edge);
-    return mesh;
+    group.add(group.stroke);
+    group.add(group.fill);
+    return group;
   },
-  updateThreeMesh: function(mesh) {
-    mesh.scale.set(this.width * this.scaleX, this.height * this.scaleY, 1);
-    mesh.material.color = new THREE.Color(this.fill);
-    mesh.edge.material.color = new THREE.Color(this.stroke);
-    mesh.edge.material.linewidth = this.strokeWidth / 2;
+  updateThreeMesh: function(group) {
+    group.fill.scale.set(this.width * this.scaleX, this.height * this.scaleY, 1);
+    group.fill.material.color = new THREE.Color(this.fill);
+    group.stroke.material.color = new THREE.Color(this.stroke);
+    group.stroke.scale.set((1 + this.strokeWidth / this.width) * this.width * this.scaleX, (1 + this.strokeWidth / this.height) * this.height * this.scaleY, 1);
   }
 });
 
 phina.display.CircleShape.prototype.$extend({
   initThreeMesh: function() {
-    var geometry = new THREE.CircleGeometry(1, 128);
-    var mesh = new THREE.Mesh(
+    var group = new THREE.Group();
+    var geometry = new THREE.CircleBufferGeometry(1, 128);
+    group.fill = new THREE.Mesh(
       geometry,
       new THREE.MeshBasicMaterial({side: THREE.DoubleSide})
     );
-    mesh.edge = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geometry),
-      new THREE.LineBasicMaterial()
+    group.fill.position.z = 1;
+    group.stroke = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial()
     );
-    mesh.add(mesh.edge);
-    return mesh;
+    group.add(group.stroke);
+    group.add(group.fill);
+    return group;
   },
-  updateThreeMesh: function(mesh) {
-    mesh.scale.set(this.radius * this.scaleX, this.radius * this.scaleY, 1);
-    mesh.material.color = new THREE.Color(this.fill);
-    mesh.edge.material.color = new THREE.Color(this.stroke);
-    mesh.edge.material.linewidth = this.strokeWidth / 2;
+  updateThreeMesh: function(group) {
+    group.fill.scale.set(this.radius * this.scaleX, this.radius * this.scaleY, 1);
+    group.fill.material.color = new THREE.Color(this.fill);
+    group.stroke.material.color = new THREE.Color(this.stroke);
+    var w = 1 + this.strokeWidth / this.radius / 2;
+    group.stroke.scale.set(w * this.radius * this.scaleX, w * this.radius * this.scaleY, 1);
   }
 });
 
@@ -220,7 +229,7 @@ phina.display.Label.prototype.$extend({
 
 phina.display.ThreeLayer.prototype.$extend({
   initThreeMesh: function() {
-    this.renderTarget = new THREE.WebGLRenderTarget(this.width * this.scaleX, this.height * this.scaleY, {});
+    this.renderTarget = new THREE.WebGLRenderTarget(this.width * this.scaleX * devicePixelRatio, this.height * this.scaleY * devicePixelRatio, {});
     return new THREE.Mesh(
       new THREE.PlaneBufferGeometry(1, 1),
       new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, map: this.renderTarget.texture})
