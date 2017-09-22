@@ -20,7 +20,7 @@ phina.define('SceneObjects', {
 			text: "Hello, phina(may -on-three).js!"
 		}).addChildTo(this).on('enterframe', function(e) {
 			this.alpha = Math.sin(e.app.frame / 20) * 0.4 + 0.6;
-		});;
+		});
 
 		CircleShape({
 			x: 160, y: 360
