@@ -60,7 +60,7 @@ phina.define('phina.display.ThreeApp', {
         }
       }.bind(this))(obj);
 
-      obj.updateThreeMesh && obj.updateThreeMesh(obj.mesh);
+      obj.updateThreeMesh && obj.updateThreeMesh(obj.mesh, this);
 
       obj._calcWorldAlpha && obj._calcWorldAlpha();
       if (obj.mesh.material) {

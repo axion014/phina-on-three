@@ -58,3 +58,20 @@ phina.display.Label.prototype.$extend({
     mesh.scale.set(this.scaleX, this.scaleY, 1);
   }
 });
+
+phina.display.ThreeLayer.prototype.$extend({
+  initThreeMesh: function() {
+    this.renderTarget = new THREE.WebGLRenderTarget(this.width * this.scaleX, this.height * this.scaleY, {});
+    return new THREE.Mesh(
+      new THREE.PlaneBufferGeometry(1, 1),
+      new THREE.MeshBasicMaterial({color: 0xffffff, side: THREE.DoubleSide, map: this.renderTarget.texture})
+    );
+  },
+  updateThreeMesh: function(mesh, app) {
+    var tmpClearColor = app.renderer.getClearColor();
+    app.renderer.setClearColor(this.renderer.getClearColor());
+    app.renderer.render(this.scene, this.camera, this.renderTarget);
+    app.renderer.setClearColor(tmpClearColor);
+    mesh.scale.set(this.width * this.scaleX, this.height * this.scaleY, 1);
+  }
+});
