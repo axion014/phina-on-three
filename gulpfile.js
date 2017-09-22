@@ -4,18 +4,23 @@ var concat = require('gulp-concat');
 var plumber = require('gulp-plumber');
 var rename = require('gulp-rename');
 var uglify = require('gulp-uglify');
+
 gulp.task('default', ['build']);
 gulp.task('watch', ['build'], function() {
-	gulp.watch(['src/**/*'], ['build']);
+  gulp.watch(['src/**/*'], ['build']);
 });
+var name = 'phina-on-three';
+var dest = gulp.dest.bind(gulp, './build/');
+var dests = [''];
+
 gulp.task('build', function() {
-	var scripts = fs.readFileSync('src/config.txt').toString().split('\n');
-	for ( var i = 0; i < scripts.length; ++i ) {scripts[i] = 'src/' + scripts[i];}
-	gulp.src(scripts)
-	.pipe(plumber())
-	.pipe(concat('phina-on-three.js'))
-	.pipe(gulp.dest('./build/'))
-	.pipe(uglify({output:{comments: /^!/}}))
-	.pipe(rename({extname: '.min.js'}))
-	.pipe(gulp.dest('./build/'));
+  dests.forEach(function(d) {
+    gulp.src(fs.readFileSync(d + (d !== "" ? '_' : '') + 'sources').toString().split('\n').map(function(x) {return "src/" + x}))
+    .pipe(plumber())
+    .pipe(concat(d + (d !== "" ? '.' : '') + name + '.js'))
+    .pipe(dest())
+    .pipe(uglify({output:{comments: /^!/}}))
+    .pipe(rename({extname: '.min.js'}))
+    .pipe(dest());
+  });
 })
