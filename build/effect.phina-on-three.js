@@ -1,10 +1,11 @@
 phina.display.ThreeApp.prototype.setupEffect = function() {
-  var flow = phina.util.Flow.all([
-    phina.asset.Script().load("https://threejs.org/examples/js/postprocessing/EffectComposer.js"),
-    phina.asset.Script().load("https://threejs.org/examples/js/shaders/CopyShader.js"),
-    phina.asset.Script().load("https://threejs.org/examples/js/postprocessing/ShaderPass.js"),
-    phina.asset.Script().load("https://threejs.org/examples/js/postprocessing/RenderPass.js")
-  ]);
+  var flow = phina.asset.Script().load("https://threejs.org/examples/js/postprocessing/EffectComposer.js").then(function() {
+    return phina.util.Flow.all([
+      phina.asset.Script().load("https://threejs.org/examples/js/shaders/CopyShader.js"),
+      phina.asset.Script().load("https://threejs.org/examples/js/postprocessing/ShaderPass.js"),
+      phina.asset.Script().load("https://threejs.org/examples/js/postprocessing/RenderPass.js")
+    ]);
+  });
   flow.then(function() {
     this.composer = new THREE.EffectComposer(this.renderer);
     var size = this.renderer.getSize();
