@@ -243,3 +243,49 @@ phina.display.ThreeLayer.prototype.$extend({
     mesh.scale.set(this.width * this.scaleX, this.height * this.scaleY, 1);
   }
 });
+
+
+phina.define('phina.display.ThreeScene', {
+  superClass: 'phina.app.Scene',
+
+  init: function(params) {
+    this.superInit();
+
+    params = ({}).$safe(params, phina.display.DisplayScene.defaults);
+
+    this.width = params.width;
+    this.height = params.height;
+    this.gridX = phina.util.Grid(params.width, 16);
+    this.gridY = phina.util.Grid(params.height, 16);
+    this.backgroundColor = (params.backgroundColor) ? params.backgroundColor : null;
+
+    // TODO: 一旦むりやり対応
+    this.interactive = true;
+    this.setInteractive = function(flag) {
+      this.interactive = flag;
+    };
+    this._overFlags = {};
+    this._touchFlags = {};
+  },
+
+  hitTest: function() {
+    return true;
+  }
+
+});
+
+phina.namespace(function() {
+  var tmpinit = phina.input.Input.prototype.init;
+
+  phina.input.Input.prototype.init = function(domElement) {
+    tmpinit(domElement);
+    this.width = this.domElement.width;
+    this.height = this.domElement.height;
+  };
+
+  phina.input.Input.prototype._move = function(x, y) {
+    var elm = this.domElement;
+    this._tempPosition.x = x * this.width / (elm.style.width ? parseInt(elm.style.width) : elm.width);
+    this._tempPosition.x = y * this.height / (elm.style.height ? parseInt(elm.style.height) :   elm.height);
+  };
+});
