@@ -2,7 +2,7 @@ phina.namespace(function() {
   var tmpinit = phina.input.Input.prototype.init;
 
   phina.input.Input.prototype.init = function(domElement) {
-    tmpinit(domElement);
+    tmpinit.call(this, domElement);
     this.width = this.domElement.width;
     this.height = this.domElement.height;
   };
