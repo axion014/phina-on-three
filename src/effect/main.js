@@ -16,7 +16,10 @@ phina.display.ThreeApp.prototype.setupEffect = function() {
         pass.renderToScreen = pass === this.composer.passes.last;
       }, this);
       this.composer.render();
-    }.bind(this)
+    }.bind(this);
+    this.on('changescene', function() {
+      this.composer.passes = [this.composer.passes[0]];
+    }.bind(this));
   }.bind(this));
   return flow;
 }
