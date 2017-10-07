@@ -5931,7 +5931,7 @@ phina.namespace(function() {
 
   var MATCH_SET_LIST = {
     "hex111": {
-      reg: /^#(\w{1})(\w{1})(\w{1})$/,
+      reg: /^#(\w)(\w)(\w)$/,
       exec: function(m) {
         return [
           parseInt(m[1] + m[1], 16),
@@ -5961,7 +5961,7 @@ phina.namespace(function() {
       }
     },
     "rgba": {
-      reg: /^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3}),\s*(\d{1}(\.{1}\d+)?)\)$/,
+      reg: /^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3}),\s*(\d(\.\d+)?)\)$/,
       exec: function(m) {
         return [
           parseInt(m[1]),
@@ -5978,11 +5978,12 @@ phina.namespace(function() {
       }
     },
     "hsla": {
-      reg: /^rgba\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3}),\s*(\d{1}(\.{1}\d+)?)\)$/,
+      reg: /^hsla\((\d{1,3}),\s*(\d{1,3})%,\s*(\d{1,3})%,\s*(\d(\.\d+)?)\)$/,
       exec: function(m) {
-        return phina.util.Color.HSLAtoRGBA(m[1], m[2], m[3], m[4]);
+        return phina.util.Color.HSLAtoRGBA(m[1], m[2], m[3], parseFloat(m[4]));
       },
     }
+    //各引数と全体の前後、全てに\s*(ホワイトスペース)を想定するのはオーバーか？
   };
 
 });
@@ -7397,9 +7398,9 @@ phina.namespace(function() {
     /**
      * @constructor
      */
-    init: function(domElement) {
+    init: function(domElement, width, height) {
       this.superInit();
-      
+
       this.domElement = domElement || window.document;
 
       this.position = phina.geom.Vector2(0, 0);
@@ -7415,6 +7416,9 @@ phina.namespace(function() {
       this.flickVelocity = phina.geom.Vector2(0, 0);
 
       this.flags = 0;
+
+      this.width = width || this.domElement.width;
+      this.height = height || this.domElement.height;
     },
 
     update: function() {
@@ -7489,17 +7493,9 @@ phina.namespace(function() {
 
     // スケールを考慮
     _move: function(x, y) {
-      this._tempPosition.x = x;
-      this._tempPosition.y = y;
-
-      // adjust scale
       var elm = this.domElement;
-      if (elm.style.width) {
-        this._tempPosition.x *= elm.width / parseInt(elm.style.width);
-      }
-      if (elm.style.height) {
-        this._tempPosition.y *= elm.height / parseInt(elm.style.height);
-      }
+      this._tempPosition.x = x * this.width / (elm.style.width ? parseInt(elm.style.width) : elm.width);
+      this._tempPosition.y = y * this.height / (elm.style.height ? parseInt(elm.style.height) : elm.height);
     },
 
     _accessor: {
@@ -7567,6 +7563,7 @@ phina.namespace(function() {
 
 })();
 
+
 ;(function() {
 
   /**
@@ -7580,8 +7577,8 @@ phina.namespace(function() {
     /**
      * @constructor
      */
-    init: function(domElement) {
-      this.superInit(domElement);
+    init: function(domElement, width, height) {
+      this.superInit(domElement, width, height);
 
       this.id = 0;
 
@@ -7605,7 +7602,7 @@ phina.namespace(function() {
       if (typeof(button) == "string") {
         button = BUTTON_MAP[button];
       }
-      
+
       return (this.now & button) != 0;
     },
 
@@ -7619,7 +7616,7 @@ phina.namespace(function() {
 
       return (this.start & button) != 0;
     },
-        
+
     /**
      * ボタンアップ取得
      */
@@ -7627,7 +7624,7 @@ phina.namespace(function() {
       if (typeof(button) == "string") {
         button = BUTTON_MAP[button];
       }
-      
+
       return (this.end & button) != 0;
     },
 
@@ -7653,6 +7650,7 @@ phina.namespace(function() {
 
 })();
 
+
 ;(function() {
 
   /**
@@ -7666,8 +7664,8 @@ phina.namespace(function() {
     /**
      * @constructor
      */
-    init: function(domElement, isMulti) {
-      this.superInit(domElement);
+    init: function(domElement, width, height, isMulti) {
+      this.superInit(domElement, width, height);
 
       this.id = null;
 
@@ -7694,14 +7692,14 @@ phina.namespace(function() {
     getTouch: function() {
       return this.now != 0;
     },
-    
+
     /**
      * タッチ開始時に true
      */
     getTouchStart: function() {
       return this.start != 0;
     },
-    
+
     /**
      * タッチ終了時に true
      */
@@ -7742,8 +7740,10 @@ phina.namespace(function() {
     touches: null,
     _id: null,
 
-    init: function(domElement) {
+    init: function(domElement, width, height) {
       this.domElement = domElement;
+      this.width = width;
+      this.height = height;
 
       this.touches = [];
       var touchMap = this.touchMap = {};
@@ -7791,8 +7791,8 @@ phina.namespace(function() {
     },
 
     getEmpty: function() {
-      var touch = phina.input.Touch(this.domElement, true);
-    
+      var touch = phina.input.Touch(this.domElement, this.width, this.height, true);
+
       touch.id = this.id;
       this.touches.push(touch);
 
@@ -7836,6 +7836,7 @@ phina.namespace(function() {
   });
 
 })();
+
 /*
  *
  */
@@ -11211,23 +11212,26 @@ phina.namespace(function() {
       this.context = this.canvas.getContext('2d');
       this.context.lineCap = 'round';
       this.context.lineJoin = 'round';
+      this.resetTransform();
     },
 
     /**
      * サイズをセット
      */
     setSize: function(width, height) {
-      this.canvas.width   = width;
-      this.canvas.height  = height;
+      this.domElement.style.width = width + "px";
+      this.domElement.style.height = height + "px";
+      this.canvas.width  = width * window.devicePixelRatio;
+      this.canvas.height = height * window.devicePixelRatio;
       return this;
     },
 
     setSizeToScreen: function() {
-      this.canvas.style.position  = "fixed";
-      this.canvas.style.margin    = "0px";
-      this.canvas.style.padding   = "0px";
-      this.canvas.style.left      = "0px";
-      this.canvas.style.top       = "0px";
+      this.canvas.style.position = "fixed";
+      this.canvas.style.margin   = "0";
+      this.canvas.style.padding  = "0";
+      this.canvas.style.left     = "0";
+      this.canvas.style.top      = "0";
       return this.setSize(window.innerWidth, window.innerHeight);
     },
 
@@ -11237,28 +11241,24 @@ phina.namespace(function() {
       var _fitFunc = function() {
         var e = this.domElement;
         var s = e.style;
-        
+
         s.position = "absolute";
         s.margin = "auto";
-        s.left = "0px";
-        s.top  = "0px";
-        s.bottom = "0px";
-        s.right = "0px";
+        s.left = "0";
+        s.top = "0";
+        s.bottom = "0";
+        s.right = "0";
 
-        var rateWidth = e.width/window.innerWidth;
-        var rateHeight= e.height/window.innerHeight;
         var rate = e.height/e.width;
-        
-        if (rateWidth > rateHeight) {
-          s.width  = Math.floor(innerWidth)+"px";
-          s.height = Math.floor(innerWidth*rate)+"px";
+
+        if (e.width/window.innerWidth > e.height/window.innerHeight) {
+          this.setSize(Math.floor(window.innerWidth), Math.floor(window.innerWidth*rate));
         }
         else {
-          s.width  = Math.floor(innerHeight/rate)+"px";
-          s.height = Math.floor(innerHeight)+"px";
+          this.setSize(Math.floor(window.innerHeight/rate), Math.floor(window.innerHeight));
         }
       }.bind(this);
-      
+
       // 一度実行しておく
       _fitFunc();
 
@@ -11275,8 +11275,15 @@ phina.namespace(function() {
       x = x || 0;
       y = y || 0;
       width = width || this.width;
-      height= height|| this.height;
-      this.context.clearRect(x, y, width, height);
+      height = height || this.height;
+
+      var context = this.context;
+
+      context.save();
+      this.resetTransform(); // 行列初期化
+      context.clearRect(x, y, width, height);
+      context.restore();
+
       return this;
     },
 
@@ -11284,12 +11291,12 @@ phina.namespace(function() {
       x = x || 0;
       y = y || 0;
       width = width || this.width;
-      height= height|| this.height;
+      height = height || this.height;
 
       var context = this.context;
 
       context.save();
-      context.setTransform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0); // 行列初期化
+      this.resetTransform(); // 行列初期化
       context.fillStyle = fillStyle;     // 塗りつぶしスタイルセット
       context.fillRect(x, y, width, height);
       context.restore();
@@ -11365,7 +11372,7 @@ phina.namespace(function() {
       return this;
     },
 
-        
+
     /**
      * 点描画
      */
@@ -11379,7 +11386,7 @@ phina.namespace(function() {
     line: function(x0, y0, x1, y1) {
       return this.moveTo(x0, y0).lineTo(x1, y1);
     },
-    
+
     /**
      * ラインを描画
      */
@@ -11400,12 +11407,12 @@ phina.namespace(function() {
         patternTable = pattern.toString(2);
       }
       patternTable = patternTable.padding(16, '1');
-      
+
       var vx = x1-x0;
       var vy = y1-y0;
       var len = Math.sqrt(vx*vx + vy*vy);
       vx/=len; vy/=len;
-      
+
       var x = x0;
       var y = y0;
       for (var i=0; i<len; ++i) {
@@ -11416,7 +11423,7 @@ phina.namespace(function() {
         x += vx;
         y += vy;
       }
-      
+
       return this;
     },
 
@@ -11428,10 +11435,10 @@ phina.namespace(function() {
       var vx = x1-x0;
       var vy = y1-y0;
       var angle = Math.atan2(vy, vx)*180/Math.PI;
-      
+
       this.drawLine(x0, y0, x1, y1);
       this.fillPolygon(x1, y1, arrowRadius || 5, 3, angle);
-      
+
       return this;
     },
 
@@ -11466,7 +11473,7 @@ phina.namespace(function() {
       this.fill();
       return this;
     },
-    
+
     /**
      * 四角形パスを作成する
      */
@@ -11474,7 +11481,7 @@ phina.namespace(function() {
       this.context.rect.apply(this.context, arguments);
       return this;
     },
-    
+
     /**
      * 四角形塗りつぶし描画
      */
@@ -11482,7 +11489,7 @@ phina.namespace(function() {
       this.context.fillRect.apply(this.context, arguments);
       return this;
     },
-    
+
     /**
      * 四角形ライン描画
      */
@@ -11490,7 +11497,7 @@ phina.namespace(function() {
       this.context.strokeRect.apply(this.context, arguments);
       return this;
     },
-    
+
     /**
      * 角丸四角形パス
      */
@@ -11499,7 +11506,7 @@ phina.namespace(function() {
       var r = x + width - radius;
       var t = y + radius;
       var b = y + height - radius;
-      
+
       /*
       var ctx = this.context;
       ctx.moveTo(l, y);
@@ -11512,13 +11519,13 @@ phina.namespace(function() {
       ctx.lineTo(x, t);
       ctx.quadraticCurveTo(x, y, l, y);
       /**/
-      
+
       this.context.arc(l, t, radius,     -Math.PI, -Math.PI*0.5, false);  // 左上
       this.context.arc(r, t, radius, -Math.PI*0.5,            0, false);  // 右上
       this.context.arc(r, b, radius,            0,  Math.PI*0.5, false);  // 右下
       this.context.arc(l, b, radius,  Math.PI*0.5,      Math.PI, false);  // 左下
       this.closePath();
-      
+
       return this;
     },
 
@@ -11543,7 +11550,7 @@ phina.namespace(function() {
       this.context.arc(x, y, radius, 0, Math.PI*2, false);
       return this;
     },
-    
+
     /**
      * 塗りつぶし円を描画
      */
@@ -11555,7 +11562,7 @@ phina.namespace(function() {
       c.fill();
       return this;
     },
-    
+
     /**
      * ストローク円を描画
      */
@@ -11575,14 +11582,14 @@ phina.namespace(function() {
       this.context.arc(x, y, radius, startAngle, endAngle, anticlockwise);
       return this;
     },
-    
+
     /**
      * 塗りつぶし円弧を描画
      */
     fillArc: function(x, y, radius, startAngle, endAngle, anticlockwise) {
       return this.beginPath().arc(x, y, radius, startAngle, endAngle, anticlockwise).fill();
     },
-    
+
     /**
      * ストローク円弧を描画
      */
@@ -11606,14 +11613,14 @@ phina.namespace(function() {
       return this.beginPath().pie(x, y, radius, startAngle, endAngle, anticlockwise).stroke();
     },
 
-    
+
     /**
      * ポリゴンパス
      */
     polygon: function(x, y, size, sides, offsetAngle) {
       var radDiv = (Math.PI*2)/sides;
       var radOffset = (offsetAngle!==undefined) ? offsetAngle*Math.PI/180 : -Math.PI/2;
-      
+
       this.moveTo(x + Math.cos(radOffset)*size, y + Math.sin(radOffset)*size);
       for (var i=1; i<sides; ++i) {
         var rad = radDiv*i+radOffset;
@@ -11637,7 +11644,7 @@ phina.namespace(function() {
     strokePolygon: function(x, y, radius, sides, offsetAngle) {
       return this.beginPath().polygon(x, y, radius, sides, offsetAngle).stroke();
     },
-    
+
     /**
      * star
      */
@@ -11690,13 +11697,18 @@ phina.namespace(function() {
       var half_radius = radius*0.5;
       var rad = (angle === undefined) ? Math.PI/4 : Math.degToRad(angle);
 
-      // 半径 half_radius の角度 angle 上の点との接線を求める
-      var p = Math.cos(rad)*half_radius;
-      var q = Math.sin(rad)*half_radius;
+      /* 半径 half_radius の角度 angle 上の点との接線を求める
+       * 円の接線の方程式 px + qy = r^2 より y = (r^2-px)/q
+       *
+       * var p = Math.cos(rad)*half_radius;
+       * var q = Math.sin(rad)*half_radius;
+       * var x2 = -half_radius;
+       * var y2 = (half_radius*half_radius-p*x2)/q;
+       *
+       * below code is optimized
+       */
 
-      // 円の接線の方程式 px + qy = r^2 より y = (r^2-px)/q
-      var x2 = -half_radius;
-      var y2 = (half_radius*half_radius-p*x2)/q;
+      var y2 = (Math.cos(rad)+1)*half_radius/Math.sin(rad);
 
       // 中心位置調整
       var height = y2 + half_radius;
@@ -11778,7 +11790,7 @@ phina.namespace(function() {
      * 行列をセット
      */
     setTransform: function(m11, m12, m21, m22, dx, dy) {
-      this.context.setTransform(m11, m12, m21, m22, dx, dy);
+      this.context.setTransform(m11 * window.devicePixelRatio, m12, m21, m22 * window.devicePixelRatio, dx * window.devicePixelRatio, dy * window.devicePixelRatio);
       return this;
     },
 
@@ -11786,25 +11798,23 @@ phina.namespace(function() {
      * 行列をリセット
      */
     resetTransform: function() {
-      this.setTransform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-      return this;
+      return this.setTransform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
     },
     /**
      * 中心に移動
      */
     transformCenter: function() {
-      this.context.setTransform(1, 0, 0, 1, this.width/2, this.height/2);
-      return this;
+      return this.setTransform(1, 0, 0, 1, this.width/2, this.height/2);
     },
 
     /**
      * 移動
      */
     translate: function(x, y) {
-      this.context.translate(x, y);
+      this.context.translate(x * window.devicePixelRatio, y * window.devicePixelRatio);
       return this;
     },
-    
+
     /**
      * 回転
      */
@@ -11812,7 +11822,7 @@ phina.namespace(function() {
       this.context.rotate(rotation);
       return this;
     },
-    
+
     /**
      * スケール
      */
@@ -11845,7 +11855,7 @@ phina.namespace(function() {
       var data_url = this.canvas.toDataURL(mime_type);
       // data_url = data_url.replace(mime_type, "image/octet-stream");
       window.open(data_url, "save");
-      
+
       // toDataURL を使えば下記のようなツールが作れるかも!!
       // TODO: プログラムで絵をかいて保存できるツール
     },
@@ -11856,16 +11866,16 @@ phina.namespace(function() {
        * 幅
        */
       width: {
-        "get": function()   { return this.canvas.width; },
-        "set": function(v)  { this.canvas.width = v; }
+        "get": function()   { return this.canvas.width / window.devicePixelRatio; },
+        "set": function(v)  { this.canvas.width = v * window.devicePixelRatio; }
       },
 
       /**
        * 高さ
        */
       height: {
-        "get": function()   { return this.canvas.height; },
-        "set": function(v)  { this.canvas.height = v; }
+        "get": function()   { return this.canvas.height / window.devicePixelRatio; },
+        "set": function(v)  { this.canvas.height = v * window.devicePixelRatio; }
       },
 
       fillStyle: {
@@ -12261,15 +12271,15 @@ phina.namespace(function() {
     },
 
     _draw: function(canvas) {
-      var image = this.canvas.domElement;
+      var image = this.canvas;
       var w = image.width;
       var h = image.height;
 
       var x = -w*this.origin.x;
       var y = -h*this.origin.y;
 
-      canvas.context.drawImage(image,
-        0, 0, w, h,
+      canvas.context.drawImage(image.domElement,
+        0, 0, image.domElement.width, image.domElement.height,
         x, y, w, h
         );
     },
@@ -12726,13 +12736,11 @@ phina.namespace(function () {
       canvas.lineJoin = this.lineJoin;
       var paths = this.paths;
       if (paths.length > 1) {
-        var c = canvas.context;
         var p = paths[0];
-        c.beginPath();
-        c.moveTo(p.x, p.y);
+        canvas.beginPath().moveTo(p.x, p.y);
         for (var i = 1, len = paths.length; i < len; ++i) {
           p = paths[i];
-          c.lineTo(p.x, p.y);
+          canvas.lineTo(p.x, p.y);
         }
       }
     },
@@ -13169,9 +13177,10 @@ phina.namespace(function() {
       this._context = this.canvas.context;
     },
     render: function(scene) {
-      this.canvas.clear();
       if (scene.backgroundColor) {
         this.canvas.clearColor(scene.backgroundColor);
+      } else {
+        this.canvas.clear();
       }
 
       this._context.save();
@@ -13206,7 +13215,7 @@ phina.namespace(function() {
       if (obj._worldMatrix) {
         // 行列をセット
         var m = obj._worldMatrix;
-        context.setTransform( m.m00, m.m10, m.m01, m.m11, m.m02, m.m12 );
+        this.canvas.setTransform( m.m00, m.m10, m.m01, m.m11, m.m02, m.m12 );
       }
 
       if (obj.clip) {
@@ -13220,10 +13229,10 @@ phina.namespace(function() {
 
         // 子供たちも実行
         if (obj.renderChildBySelf === false && obj.children.length > 0) {
-            var tempChildren = obj.children.slice();
-            for (var i=0,len=tempChildren.length; i<len; ++i) {
-                this.renderObject(tempChildren[i]);
-            }
+          var tempChildren = obj.children.slice();
+          for (var i=0,len=tempChildren.length; i<len; ++i) {
+            this.renderObject(tempChildren[i]);
+          }
         }
 
         context.restore();
@@ -13261,6 +13270,8 @@ phina.namespace(function() {
      * @constructor
      */
     init: function(options) {
+      options = (options || {}).$safe(phina.display.DomApp.defaults);
+
       this.superInit(options);
 
       if (options.domElement) {
@@ -13278,14 +13289,17 @@ phina.namespace(function() {
       if (options.fps !== undefined) {
         this.fps = options.fps;
       }
-      
+
       if(typeof options.runner === 'function') {
         this.ticker.runner = options.runner;
       }
 
-      this.mouse = phina.input.Mouse(this.domElement);
-      this.touch = phina.input.Touch(this.domElement);
-      this.touchList = phina.input.TouchList(this.domElement, 5);
+      this.width = options.width;
+      this.height = options.height;
+
+      this.mouse = phina.input.Mouse(this.domElement, this.width, this.height);
+      this.touch = phina.input.Touch(this.domElement, this.width, this.height);
+      this.touchList = phina.input.TouchList(this.domElement, this.width, this.height, 5);
       this.keyboard = phina.input.Keyboard(document);
       // 加速度センサーを生成
       this.accelerometer = phina.input.Accelerometer();
@@ -13364,9 +13378,16 @@ phina.namespace(function() {
       _check(this.currentScene);
     },
 
+    _static: {
+      defaults: {
+        width: 640,
+        height: 960,
+      },
+    },
+
   });
 
-  
+
 });
 
 
@@ -13384,7 +13405,7 @@ phina.namespace(function() {
      */
     init: function(options) {
       options = (options || {}).$safe(phina.display.CanvasApp.defaults);
-      
+
       if (!options.query && !options.domElement) {
         options.domElement = document.createElement('canvas');
         if (options.append) {
@@ -13396,24 +13417,23 @@ phina.namespace(function() {
       }
       this.superInit(options);
 
-
       this.gridX = phina.util.Grid({
-        width: options.width,
+        width: this.width,
         columns: options.columns,
       });
       this.gridY = phina.util.Grid({
-        width: options.height,
+        width: this.height,
         columns: options.columns,
       });
 
       this.canvas = phina.graphics.Canvas(this.domElement);
-      this.canvas.setSize(options.width, options.height);
+      this.canvas.setSize(this.width, this.height);
 
       this.backgroundColor = (options.backgroundColor !== undefined) ? options.backgroundColor : 'white';
 
       this.replaceScene(phina.display.DisplayScene({
-        width: options.width,
-        height: options.height,
+        width: this.width,
+        height: this.height,
       }));
 
       if (options.fit) {
@@ -13448,7 +13468,7 @@ phina.namespace(function() {
         this._scenes.each(function(scene) {
           var c = scene.canvas;
           if (c) {
-            this.canvas.context.drawImage(c.domElement, 0, 0, c.width, c.height);
+            this.canvas.context.drawImage(c.domElement, 0, 0, this.canvas.domElement.width, this.canvas.domElement.height);
           }
         }, this);
       }
@@ -13460,8 +13480,6 @@ phina.namespace(function() {
 
     _static: {
       defaults: {
-        width: 640,
-        height: 960,
         columns: 12,
         fit: true,
         append: true,
